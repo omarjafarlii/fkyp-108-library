@@ -1,0 +1,57 @@
+services:
+  app:
+    build: .
+    container_name: lesson42-app
+    env_file: .env
+    environment:
+      # Konteynerin içində "localhost" — konteynerin özüdür. Baza "db" adlı servisdədir.
+      DATABASE_URL: postgresql://postgres:password@db:5432/lesson42?schema=public
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    volumes:
+      - lesson42-uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # node:22-slim-də curl yoxdur — Node-un öz fetch-i ilə yoxlayırıq
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  db:
+    image: postgres:16
+    container_name: lesson42-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: lesson-42
+    ports:
+      - "5432:5432"
+    volumes:
+      - lesson42-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d lesson42"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  db-test:
+    image: postgres:16
+    container_name: lesson42-db-test
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: lesson42_test
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+
+volumes:
+  lesson42-data:
+  lesson42-uploads:

@@ -1,0 +1,20 @@
+# Konteynerin içində yenidən quraşdırılır / yaradılır
+node_modules
+dist
+src/generated
+
+# Secret-lər image-ə düşməməlidir
+.env
+.env.*
+
+# Konteynerə lazım olmayanlar
+.git
+.github
+tests
+tmp
+uploads
+coverage
+*.log
+Dockerfile
+.dockerignore
+docker-compose.yml

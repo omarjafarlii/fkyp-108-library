@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  authors Author[]
+  profile Profile?
+  loans   Loan[]
+
+  @@map("users")
+}
+
+model Author {
+  id        Int      @id @default(autoincrement())
+  name      String
+  country   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  userId    Int      @map("user_id")
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  books Book[]
+
+  @@unique([userId, name])
+  @@index([country])
+  @@map("authors")
+}
+
+model Profile {
+  id          Int     @id @default(autoincrement())
+  displayName String  @map("display_name")
+  bio         String?
+  userId      Int     @unique @map("user_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model Book {
+  id       Int    @id @default(autoincrement())
+  title    String
+  year     Int
+  pages           Int?
+  availableCopies Int    @default(1) @map("available_copies")
+  coverUrl        String? @map("cover_url")
+  authorId        Int    @map("author_id")
+
+  author Author @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  loans  Loan[]
+
+  @@index([authorId])
+  @@map("books")
+}
+
+model Loan {
+  id         Int       @id @default(autoincrement())
+  borrowedAt DateTime  @default(now()) @map("borrowed_at")
+  returnedAt DateTime? @map("returned_at")
+  userId     Int       @map("user_id")
+  bookId     Int       @map("book_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([bookId])
+  @@map("loans")
+}
